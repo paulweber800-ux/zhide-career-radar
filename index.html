@@ -32,7 +32,7 @@ button,input,select{font:inherit}button{cursor:pointer}.app{min-height:100vh;dis
 <section id="resume" class="page"><div class="title"><h1>简历与经历诊断</h1><p>诊断只根据你亲自填写的画像生成，不预置任何其他用户的经历。</p></div><div id="resumeContent" class="panel"></div></section>
 <section id="radars" class="page"><div class="title"><h1>我的求职雷达</h1><p>为不同职业方向建立独立筛选规则。</p></div><div class="radars"><div class="card"><h3>◎ 游戏海外市场</h3><p>游戏、海外市场、广州/上海/深圳、≥20K</p><button onclick="tip('求职方案已保存')">编辑规则 →</button></div><div class="card"><h3>◎ 全球品牌营销</h3><p>品牌、整合营销、全球、经理</p><button onclick="tip('求职方案已保存')">编辑规则 →</button></div><div class="card"><h3>＋ 新建求职方案</h3><p>设置行业、职能、地点、薪资和排除项。</p><button onclick="tip('可以开始设置新方案')">开始设置 →</button></div></div></section>
 <section id="progress" class="page"><div class="title"><h1>投递进度</h1><p>收藏与投递记录保存在当前电脑。</p></div><div class="kanban" id="kanban"></div></section>
-<section id="sources" class="page"><div class="title"><h1>数据来源</h1><p>公开展示来源覆盖，不把搜索列表冒充具体岗位。</p></div><div class="panel"><div class="source"><b>来源</b><b>状态</b><b>通过</b><b>说明</b></div><div class="source"><span>BOSS直聘</span><span class="green">已核验</span><span>6</span><span>原平台登录后投递</span></div><div class="source"><span>LinkedIn</span><span class="green">已核验</span><span>5</span><span>账号信息不在本工具保存</span></div><div class="source"><span>公司招聘官网</span><span>公开来源</span><span>7</span><span>优先使用官方详情页</span></div><div class="source"><span>脉脉</span><span>安全跳转</span><span>0</span><span>匿名或无详情页岗位不收录</span></div></div></section>
+<section id="sources" class="page"><div class="title"><h1>数据来源与更新状态</h1><p>只把本轮成功访问的来源标为完成；需要登录或官方合作的平台不会冒充已检索。</p></div><div class="panel"><div class="source"><b>来源</b><b>本轮状态</b><b>岗位数</b><b>说明</b></div><div class="source"><span>Remotive公开API</span><span id="remotiveStatus">正在检查</span><span id="remotiveCount">—</span><span>公开远程职位，取得具体详情链接</span></div><div class="source"><span>Arbeitnow公开API</span><span id="arbeitStatus">正在检查</span><span id="arbeitCount">—</span><span>公开国际职位，取得具体详情链接</span></div><div class="source"><span>BOSS / 脉脉 / 猎聘等</span><span>待官方接入</span><span>—</span><span>不保存密码、验证码或Cookie</span></div><div class="source"><span>本轮更新时间</span><span class="green" id="liveUpdated">尚未完成</span><span>—</span><span>页面打开时检查，每4小时自动复查公开API</span></div></div></section>
 <section id="privacy" class="page"><div class="title"><h1>隐私安全中心</h1><p>你始终控制自己的账号、简历与授权。</p></div><div class="security"><div class="card"><h3>招聘平台账号</h3><p>不索取或保存密码、验证码和Cookie；投递在原平台完成。</p></div><div class="card"><h3>本机数据</h3><p>收藏和进度只保存在当前浏览器，可随时清除。</p><button onclick="clearData()">清除本机记录 →</button></div><div class="card"><h3>自动投递保护</h3><p>默认不自动投递，每次提交均需本人确认。</p></div></div></section>
 <section id="account" class="page"><div class="title"><h1>我的</h1><p>管理求职偏好、通知、来源透明度和个人数据。</p></div><div class="account-grid"><section class="panel"><h2>求职偏好</h2><p id="profileSummary">尚未建立求职画像</p><button class="profile-btn" style="background:var(--green)" onclick="openProfile()">编辑求职画像</button></section><section class="panel"><h2>提醒设置</h2><p>演示版暂不主动发送通知；后续启用时需要用户单独授权。</p><button onclick="tip('提醒功能尚未启用，不会在后台读取账号')">查看说明</button></section><section class="panel"><h2>信任与数据</h2><p>来源覆盖和隐私信息仍可随时查看，但不占用一级导航。</p><div class="account-links"><button onclick="showSubPage('sources')">查看数据来源与覆盖 →</button><button onclick="showSubPage('privacy')">隐私、安全与删除数据 →</button></div></section><section class="panel"><h2>退出当前画像</h2><p>这不是服务器账号登录。退出将删除当前浏览器中的画像、收藏、投递进度和推荐反馈，并返回新用户页面。</p><button onclick="logoutUser()">退出并清除本机数据</button></section></div></section>
 </main></div><div id="toast" class="toast"></div><div id="profileModal" class="modal"><section class="modal-box"><button class="close" onclick="closeProfile()">×</button><small class="green">独立求职画像 · 3步完成</small><h2>建立你的岗位匹配条件</h2><p>参考主流招聘平台的分类方式，同时允许添加自定义选项。数据只保存在当前浏览器。</p><div class="wizard-progress"><i id="stepBar1" class="active"></i><i id="stepBar2"></i><i id="stepBar3"></i></div>
@@ -192,7 +192,17 @@ function renderResume(){
   const skillList=tokens(profile.skills);
   const strengths=[profile.years&&"已明确工作年限："+profile.years,skillList.length&&"已提供 "+skillList.length+" 项核心技能",profile.markets&&"具备目标市场/语言方向："+profile.markets].filter(Boolean);
   const missing=[!profile.skills&&"核心技能与代表项目",!profile.markets&&"目标市场或语言能力",!profile.salary&&"期望薪资范围","建议补充可量化成果、项目规模和个人贡献"].filter(Boolean);
-  resumeContent.innerHTML=`<div class="diagnosis"><section class="diag-score"><span>你的目标方向</span><h2>${profile.target}</h2><p>这是基于手动填写信息生成的初步诊断，不等同于完整简历解析。</p><div class="bars"><div class="bar"><span>画像完整度</span><i><b style="width:${Math.min(100,50+strengths.length*15)}%"></b></i><em>${Math.min(100,50+strengths.length*15)}</em></div></div></section><div class="diag-list"><article class="card"><h3 class="green">当前可识别优势</h3><ul>${strengths.map(x=>`<li>${x}</li>`).join("")||"<li>请补充年限、技能和目标市场</li>"}</ul></article><article class="card"><h3>建议补充</h3><ul>${missing.map(x=>`<li>${x}</li>`).join("")}</ul></article><article class="card"><h3>下一步</h3><ul><li>用“目标—动作—结果”描述代表项目</li><li>至少填写3项技能和2个量化成果</li><li>投递前针对岗位要求调整简历关键词</li></ul></article></div></div>`;
+  const savedResume=localStorage.getItem("zhide-resume-text")||"";
+  resumeContent.innerHTML=`<div class="diagnosis"><section class="diag-score"><span>你的目标方向</span><h2>${safeText(profile.target)}</h2><p>这是基于画像与简历文本生成的基础诊断，不会上传原文件。</p><div class="bars"><div class="bar"><span>画像完整度</span><i><b style="width:${Math.min(100,50+strengths.length*15)}%"></b></i><em>${Math.min(100,50+strengths.length*15)}</em></div></div></section><div class="diag-list"><article class="card"><h3 class="green">当前可识别优势</h3><ul>${strengths.map(x=>`<li>${safeText(x)}</li>`).join("")||"<li>请补充年限、技能和目标市场</li>"}</ul></article><article class="card"><h3>建议补充</h3><ul>${missing.map(x=>`<li>${safeText(x)}</li>`).join("")}</ul></article><article class="card"><h3>下一步</h3><ul><li>用“目标—动作—结果”描述代表项目</li><li>至少填写3项技能和2个量化成果</li><li>投递前针对岗位要求调整简历关键词</li></ul></article></div></div><section class="card" style="margin-top:15px"><h3>粘贴简历文本进行本机诊断</h3><p>建议先删除手机号、邮箱和证件信息。本功能不会上传文本。</p><textarea id="resumeInput" style="width:100%;min-height:210px;border:1px solid var(--line);border-radius:9px;padding:12px" placeholder="粘贴工作经历、项目、技能和量化成果…">${safeText(savedResume)}</textarea><button class="save-profile" style="margin-top:9px" onclick="analyzeResume()">分析简历文本</button><div id="resumeAnalysis"></div></section>`;
+}
+function analyzeResume(){
+  const text=resumeInput.value.trim();if(!text){tip("请先粘贴简历文本");return}
+  localStorage.setItem("zhide-resume-text",text);
+  const hit=tokens(profile.skills).filter(skill=>text.toLowerCase().includes(skill));
+  const quantified=/\d+%|\d+万|\d+k|roi|增长|提升|降低/i.test(text);
+  const structure=/负责|项目|成果|教育|技能/.test(text);
+  const value=Math.min(94,48+hit.length*7+(quantified?18:0)+(structure?12:0));
+  resumeAnalysis.innerHTML=`<div class="verified" style="margin-top:12px">基础诊断 ${value}/100 · 命中技能 ${hit.length} 项</div><div class="reason">技能命中：${hit.length?safeText(hit.join("、")):"暂未命中画像技能"}</div><div class="reason">${quantified?"已经包含量化成果":"建议补充增长率、预算、营收或效率数据"}</div><div class="reason">${structure?"已识别经历或项目结构":"建议按经历、项目、成果、技能分段"}</div><div class="gap">此结果是本机关键词检查，不等同于完整AI简历解析；正式上传解析需单独授权。</div>`;
 }
 function tip(text){toast.textContent=text;toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),1800)}
 function valuesOf(id){return document.getElementById(id).value.split("、").map(x=>x.trim()).filter(Boolean)}
@@ -222,6 +232,7 @@ function clearData(){
   localStorage.removeItem("zhide-profile");
   localStorage.removeItem("zhide-profile-confirmed");
   localStorage.removeItem("zhide-feedback");
+  localStorage.removeItem("zhide-resume-text");
   stages={};profile=null;feedback={};
   document.body.classList.remove("profile-ready");
   render();renderAll();renderResume();renderKanban();
@@ -252,8 +263,37 @@ function saveProfile(){
   document.body.classList.add("profile-ready");
   closeProfile();render();renderAll();renderResume();tip("已用你的画像重新匹配");
 }
+function safeText(value){return String(value||"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}
+async function loadLiveJobs(){
+  const existing=new Set(jobs.map(job=>job.url));let nextId=Math.max(...jobs.map(job=>job.id))+1;
+  let remotiveTotal=0,arbeitTotal=0;
+  try{
+    const response=await fetch("https://remotive.com/api/remote-jobs?limit=50");
+    if(!response.ok)throw new Error("HTTP "+response.status);
+    const data=await response.json();remotiveTotal=(data.jobs||[]).length;
+    for(const item of data.jobs||[]){
+      if(!item.url||existing.has(item.url))continue;existing.add(item.url);
+      jobs.push({id:nextId++,c:safeText(item.company_name),t:safeText(item.title),l:safeText(item.candidate_required_location||"远程"),s:safeText(item.salary||"薪资见详情"),src:"Remotive公开API",score:0,m:"全球",tags:[item.category,...(item.tags||[])].filter(Boolean).slice(0,5).map(safeText),r:[],gap:"国际远程岗位；请在原始职位页确认时区、雇佣地区、签证、薪资和申请状态。",url:item.url});
+    }
+    remotiveStatus.textContent="已完成";remotiveStatus.className="green";remotiveCount.textContent=remotiveTotal;
+  }catch{remotiveStatus.textContent="本轮失败";remotiveCount.textContent="0"}
+  try{
+    const response=await fetch("https://www.arbeitnow.com/api/job-board-api");
+    if(!response.ok)throw new Error("HTTP "+response.status);
+    const data=await response.json();arbeitTotal=(data.data||[]).length;
+    for(const item of (data.data||[]).slice(0,50)){
+      if(!item.url||existing.has(item.url))continue;existing.add(item.url);
+      jobs.push({id:nextId++,c:safeText(item.company_name),t:safeText(item.title),l:safeText(item.location||"地点见详情"),s:"薪资见详情",src:"Arbeitnow公开API",score:0,m:"全球",tags:(item.tags||["国际职位"]).slice(0,5).map(safeText),r:[],gap:"国际职位；请在原始职位页确认语言、工作资格、薪资、发布时间和当前申请状态。",url:item.url});
+    }
+    arbeitStatus.textContent="已完成";arbeitStatus.className="green";arbeitCount.textContent=arbeitTotal;
+  }catch{arbeitStatus.textContent="本轮失败";arbeitCount.textContent="0"}
+  liveUpdated.textContent=new Date().toLocaleString("zh-CN");
+  if(profile){render();renderAll();renderResume()}
+}
 search.oninput=market.onchange=threshold.onchange=render;
 if(profile)document.body.classList.add("profile-ready");
 render();renderAll();renderResume();
 if(!profile)setTimeout(openProfile,250);
+loadLiveJobs();
+setInterval(loadLiveJobs,4*60*60*1000);
 </script></body></html>
