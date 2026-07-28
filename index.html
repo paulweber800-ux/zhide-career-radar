@@ -11,6 +11,7 @@ button,input,select{font:inherit}button{cursor:pointer}.app{min-height:100vh;dis
 .profile-btn{border:1px solid #5d776a;background:transparent;color:#fff;border-radius:8px;padding:9px 12px;font-size:10px}.modal{display:none;position:fixed;inset:0;background:linear-gradient(145deg,#eef4f0,#f8faf8);z-index:20;place-items:center;padding:18px}.modal.open{display:grid}.modal-box{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border:1px solid var(--line);box-shadow:0 24px 80px #16342622;border-radius:18px;padding:25px;position:relative}.modal-box h2{margin:8px 0}.modal-box>p{font-size:10px;color:var(--muted)}.close{position:absolute;right:16px;top:12px;border:0;background:none;font-size:22px}.upload{display:grid;place-items:center;border:1px dashed #85ad98;background:#f3f8f5;border-radius:10px;padding:18px;margin:16px 0;font-size:10px;color:var(--green)}.upload input{display:none}.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.profile-grid label{font-size:9px;font-weight:800}.profile-grid input{display:block;width:100%;border:1px solid var(--line);padding:9px;border-radius:7px;margin-top:4px;font-size:9px}.profile-grid .wide{grid-column:1/-1}.consent{display:block;font-size:8px;color:var(--muted);margin:13px 0}.save-profile{width:100%;border:0;background:var(--green);color:#fff;border-radius:8px;padding:11px;font-size:10px;font-weight:800}
 .diagnosis{display:grid;grid-template-columns:1.1fr .9fr;gap:15px}.diag-score{background:#17271f;color:#fff;border-radius:16px;padding:24px}.diag-score>span{font-size:10px;color:var(--lime)}.diag-score h2{font-size:40px;margin:12px 0 5px}.diag-score p{font-size:10px;color:#a9b9b0}.bars{margin-top:20px}.bar{display:grid;grid-template-columns:85px 1fr 30px;gap:8px;align-items:center;font-size:9px;margin:11px 0}.bar i{height:6px;background:#344b40;border-radius:6px;overflow:hidden}.bar i b{display:block;height:100%;background:var(--lime)}.diag-list{display:grid;gap:10px}.diag-list .card{padding:16px}.diag-list h3{margin:0 0 7px}.diag-list li{font-size:9px;color:var(--muted);margin:7px 0}.account-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.account-grid .panel h2{font-size:14px}.account-grid .panel>p{font-size:10px;color:var(--muted);line-height:1.6}.account-links{display:grid;gap:8px}.account-links button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:11px;text-align:left;font-size:10px}.pool-banner{display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px;margin-bottom:16px}.pool-banner b{font-size:22px;color:var(--green);margin-right:8px}.pool-banner span{font-size:10px;color:var(--muted)}.pool-banner small{margin-left:auto;font-size:9px;color:var(--green)}
 .wizard-progress{display:flex;gap:6px;margin:16px 0}.wizard-progress i{height:5px;flex:1;border-radius:6px;background:#e8edea}.wizard-progress i.active{background:var(--green)}.wizard-step{display:none}.wizard-step.active{display:block}.choice-title{font-size:10px;font-weight:900;margin:15px 0 8px}.chips{display:flex;flex-wrap:wrap;gap:7px}.chip{border:1px solid var(--line);background:#fff;border-radius:18px;padding:8px 11px;font-size:9px;color:var(--ink)}.chip.selected{background:#e8f4ed;border-color:var(--green);color:var(--green);font-weight:800}.choice-output{width:100%;border:1px solid var(--line);background:#f8faf9;padding:10px;border-radius:8px;margin-top:9px;font-size:9px}.wizard-actions{display:flex;gap:8px;margin-top:18px}.wizard-actions button{flex:1;border:0;border-radius:8px;padding:11px;font-size:10px;font-weight:800}.wizard-back{background:#edf2ef;color:var(--green)}.wizard-next{background:var(--green);color:#fff}.custom-row{display:grid;grid-template-columns:1fr auto;gap:7px;margin-top:9px}.custom-row input{border:1px solid var(--line);border-radius:8px;padding:9px;font-size:9px}.custom-row button{border:1px solid var(--green);background:#fff;color:var(--green);border-radius:8px;padding:0 12px;font-size:9px}
+.match-breakdown{border:1px solid var(--line);border-radius:10px;padding:12px;margin:13px 0}.match-breakdown>div{display:grid;grid-template-columns:76px 1fr 36px;gap:7px;align-items:center;margin:9px 0;font-size:9px}.match-breakdown i{height:5px;background:#edf1ef;border-radius:5px;overflow:hidden}.match-breakdown i b{display:block;height:100%;background:var(--green)}.match-breakdown strong{text-align:right;color:var(--green)}.score-note{font-size:8px;color:var(--muted);line-height:1.55;margin-top:8px}.reason.warn:before{content:"!"}.reason.warn{color:#8a6213}
 </style>
 </head>
 <body><div class="app">
@@ -75,28 +76,33 @@ let selected=jobs[0];
 let stages=JSON.parse(localStorage.getItem("zhide-stages")||"{}");
 let profile=JSON.parse(localStorage.getItem("zhide-profile")||"null");
 const tokens=value=>(value||"").toLowerCase().split(/[\s,，、/；;]+/).filter(x=>x.length>1);
-function scoreJob(job){
+function scoreParts(job){
   if(!profile)return null;
   const body=(job.c+" "+job.t+" "+job.tags.join(" ")+" "+job.m+" "+job.l).toLowerCase();
-  let score=40;
-  score+=Math.min(25,tokens((profile.target||"")+" "+(profile.industry||"")).filter(x=>body.includes(x)).length*9);
-  score+=Math.min(20,tokens(profile.skills).filter(x=>body.includes(x)).length*7);
-  score+=Math.min(15,tokens((profile.locations||"")+" "+(profile.markets||"")).filter(x=>body.includes(x)).length*6);
-  if(profile.years)score+=8;
-  return Math.min(98,score);
+  const roleHits=tokens((profile.target||"")+" "+(profile.industry||"")).filter(x=>body.includes(x));
+  const skillHits=tokens(profile.skills).filter(x=>body.includes(x));
+  const locationHits=tokens(profile.locations).filter(x=>body.includes(x));
+  const marketHits=tokens(profile.markets).filter(x=>body.includes(x));
+  const senior=/资深|负责人|总监|senior|manager/i.test(job.t+" "+job.l);
+  const experienced=/3–5年|3-5年|5–10年|5-10年/.test(profile.years||"");
+  const experienceScore=!profile.years?6:senior?(experienced?13:7):13;
+  return[
+    {name:"职能与行业",score:Math.min(30,8+roleHits.length*11),max:30,note:roleHits.length?"命中 "+roleHits.slice(0,3).join("、"):"未直接命中已选职能，属于扩展推荐"},
+    {name:"核心技能",score:Math.min(25,5+skillHits.length*7),max:25,note:skillHits.length?"命中 "+skillHits.slice(0,3).join("、"):"职位摘要中技能关键词较少"},
+    {name:"地点",score:locationHits.length?15:5,max:15,note:locationHits.length?"命中 "+locationHits.join("、"):"未命中首选地点"},
+    {name:"市场/语言",score:marketHits.length?15:5,max:15,note:marketHits.length?"命中 "+marketHits.slice(0,3).join("、"):"详情页需进一步确认区域和语言"},
+    {name:"经验级别",score:experienceScore,max:15,note:!profile.years?"未填写经验年限":senior?(experienced?"经验区间与高级岗位基本相符":"岗位可能偏高级，需核对年限要求"):"经验要求以原职位详情为准"}
+  ];
 }
+function scoreJob(job){const parts=scoreParts(job);return parts?Math.min(98,parts.reduce((sum,item)=>sum+item.score,0)):null}
 function tier(score){return score===null?"待匹配":score>=90?"高匹配":score>=80?"值得尝试":score>=65?"可迁移":"探索岗位"}
 function reasonsFor(job){
   if(!profile)return["完成个人画像后生成匹配理由","未使用任何其他用户的经历","当前仅展示公共岗位信息"];
-  const reasons=[];
-  const body=(job.c+" "+job.t+" "+job.tags.join(" ")+" "+job.m+" "+job.l).toLowerCase();
-  const role=tokens(profile.target).filter(x=>body.includes(x));
-  const skills=tokens(profile.skills).filter(x=>body.includes(x));
-  const places=tokens((profile.locations||"")+" "+(profile.markets||"")).filter(x=>body.includes(x));
-  reasons.push(role.length?"目标方向相关："+role.slice(0,2).join("、"):"属于可迁移岗位，建议核对具体职责");
-  reasons.push(skills.length?"技能命中："+skills.slice(0,3).join("、"):"技能关键词命中较少，可查看详情判断");
-  reasons.push(places.length?"地点/市场偏好命中："+places.slice(0,2).join("、"):"地点或目标市场需要进一步确认");
-  return reasons;
+  return scoreParts(job).filter(item=>item.score/item.max>=.6).slice(0,3).map(item=>item.name+"："+item.note);
+}
+function breakdown(job){
+  if(!profile)return"";
+  return`<div class="match-breakdown">${scoreParts(job).map(item=>`<div title="${item.note}"><span>${item.name}</span><i><b style="width:${Math.round(item.score/item.max*100)}%"></b></i><strong>${item.score}/${item.max}</strong></div>`).join("")}<p class="score-note">分数根据当前画像与职位摘要关键词计算；薪资、实际年限、语言熟练度等仍需进入原招聘页确认。</p></div>`;
 }
 document.querySelectorAll("[data-page]").forEach(button=>button.onclick=()=>{
   document.querySelectorAll("[data-page]").forEach(x=>x.classList.toggle("active",x===button));
@@ -119,7 +125,7 @@ function render(){
   count.textContent=list.length+(profile?" 个个人推荐岗位":" 个公共岗位 · 建立画像后显示匹配度");
   joblist.innerHTML=list.map(({job,score})=>`<article class="job ${selected.id===job.id?"active":""}" onclick="selectJob(${job.id})"><div class="job-top"><div><h3>${job.t}</h3><p>${job.c} · ${job.l}</p></div><span class="score">${score===null?"待匹配":score+"%"}</span></div><div class="tags">${job.tags.map(x=>`<span>${x}</span>`).join("")}</div><div class="foot"><span>${job.s}</span><small>${job.src} · 详情页已核验</small></div></article>`).join("");
   const selectedScore=scoreJob(selected);
-  detail.innerHTML=`<span>${tier(selectedScore)}${selectedScore===null?"":" · "+selectedScore+"%"}</span><h2>${selected.t}</h2><p>${selected.c} · ${selected.l}</p><div class="verified">✓ 具体职位详情页已核验</div>${reasonsFor(selected).map(x=>`<div class="reason">${x}</div>`).join("")}<div class="gap"><b>投递前需要确认</b><br>${selected.gap}</div><div class="actions"><a href="${selected.url}" target="_blank" rel="noopener">查看原始职位 ↗</a><button onclick="mark(${selected.id},'已投递')">标记已投</button><button onclick="mark(${selected.id},'已收藏')">♡</button></div>`;
+  detail.innerHTML=`<span>${tier(selectedScore)}${selectedScore===null?"":" · "+selectedScore+"%"}</span><h2>${selected.t}</h2><p>${selected.c} · ${selected.l}</p><div class="verified">✓ 具体职位详情页已核验</div>${breakdown(selected)}${reasonsFor(selected).map(x=>`<div class="reason">${x}</div>`).join("")}<div class="gap"><b>投递前需要确认</b><br>${selected.gap}</div><div class="actions"><a href="${selected.url}" target="_blank" rel="noopener">查看原始职位 ↗</a><button onclick="mark(${selected.id},'已投递')">标记已投</button><button onclick="mark(${selected.id},'已收藏')">♡</button></div>`;
   updateHeader();
 }
 function selectJob(id){selected=jobs.find(j=>j.id===id);render()}
