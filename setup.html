@@ -33,9 +33,9 @@
       root.innerHTML=`<section class="card"><div class="head"><div><h2>同步状态</h2><p>${state.linked?"已绑定当前微信，可从网页和小程序更新同一份资料。":"尚未绑定。填写后会生成一次性验证码。"}</p></div><span class="status ${state.linked?"linked":""}">${state.linked?"✓ 已绑定":"待绑定"}</span></div></section>`+
       groups.map(([key,title,hint,max,options])=>`<section class="card"><div class="head"><div><h2>${title}</h2><p>${hint}</p></div><span class="count">${state[key].length}/${max}</span></div><div class="chips">${options.map(v=>`<button type="button" data-key="${key}" data-max="${max}" data-value="${v}" class="${state[key].includes(v)?"on":""}">${v}</button>`).join("")}</div></section>`).join("")+`
       <section class="card"><h2>工作年限</h2><select id="years"><option value="">请选择</option>${["应届生","1年以内","1-3年","3-5年","5-10年","10年以上"].map(v=>`<option ${state.years===v?"selected":""}>${v}</option>`).join("")}</select></section>
-      <section class="card"><h2>简历</h2><p>${state.linked?"可上传 PDF / DOCX 自动解析，或直接粘贴正文。上传只用于个人画像与匹配。":"首次绑定前可先粘贴正文；PDF / DOCX 上传会在绑定后启用。"}</p>
-        <input id="resumeFile" type="file" accept=".pdf,.docx" ${state.linked?"":"disabled"}>
-        <div class="resume-actions"><button id="uploadResume" ${state.linked?"":"disabled"}>上传并解析</button><span id="fileStatus" class="privacy">单个文件不超过 4MB；扫描版 PDF 请粘贴文字。</span></div>
+      <section class="card"><h2>简历</h2><p>${state.linked?"可上传 PDF / DOCX 自动解析，或直接粘贴正文。上传只用于个人画像与匹配。":"首次绑定前可以先粘贴简历正文；文件上传会在安全绑定后开放。"}</p>
+        ${state.linked?`<input id="resumeFile" type="file" accept=".pdf,.docx">
+        <div class="resume-actions"><button type="button" id="uploadResume">上传并解析</button><span id="fileStatus" class="privacy">选择文件后会自动开始；单个文件不超过 4MB。</span></div>`:`<div class="notice">🔒 PDF / DOCX 上传暂未开放：请先完成本页求职意向，生成 8 位验证码并在小程序确认绑定，然后刷新本页面。</div>`}
         <textarea id="resume" placeholder="也可以在这里粘贴简历正文，建议至少 50 字">${esc(state.resumeText)}</textarea>
         <p class="privacy">原文件仅在解析请求中临时处理；账号中保存提取后的文字与分析结果，不会自动发送给企业。</p>
       </section>
@@ -43,7 +43,9 @@
       <div id="error">${message}</div><button class="submit" id="submit">${state.linked?"保存并同步到小程序":"生成小程序绑定码"}</button>`;
       document.querySelectorAll("[data-key]").forEach(btn=>btn.onclick=()=>{capture();const a=state[btn.dataset.key],v=btn.dataset.value,max=+btn.dataset.max;if(a.includes(v))a.splice(a.indexOf(v),1);else if(a.length<max)a.push(v);draw()});
       document.querySelector("#submit").onclick=save;
-      document.querySelector("#uploadResume").onclick=uploadResume;
+      const uploadButton=document.querySelector("#uploadResume"),resumeFile=document.querySelector("#resumeFile");
+      if(uploadButton)uploadButton.onclick=uploadResume;
+      if(resumeFile)resumeFile.onchange=()=>{if(resumeFile.files&&resumeFile.files[0])uploadResume()};
     }
     async function callApi(payload){
       const response=await fetch(API,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({...payload,deviceId,deviceSecret})});
@@ -66,16 +68,16 @@
     }
     async function uploadResume(){
       capture();const file=document.querySelector("#resumeFile").files[0],status=document.querySelector("#fileStatus");
-      if(!file){status.textContent="请先选择 PDF 或 DOCX 文件";return}
+      if(!file){status.textContent="请先点击上方文件框选择 PDF 或 DOCX";alert("请先选择一个 PDF 或 DOCX 简历文件。");return}
       const extension=(file.name.split(".").pop()||"").toLowerCase();
-      if(!["pdf","docx"].includes(extension)||file.size>4*1024*1024){status.textContent="请选择不超过 4MB 的 PDF 或 DOCX";return}
+      if(!["pdf","docx"].includes(extension)||file.size>4*1024*1024){status.textContent="请选择不超过 4MB 的 PDF 或 DOCX";alert("文件格式或大小不符合要求：仅支持 4MB 内的 PDF、DOCX。");return}
       status.textContent="正在读取并安全解析…";document.querySelector("#uploadResume").disabled=true;
       try{
         const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(",")[1]);reader.onerror=reject;reader.readAsDataURL(file)});
         const response=await fetch(RESUME_API,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"webResume",deviceId,deviceSecret,fileName:file.name,extension,base64})});
         const result=await response.json();if(!result.ok)throw new Error(result.error||"解析失败");
         state.resumeText=result.text;state.profileUpdatedAt=result.profileUpdatedAt;draw(`<div class="success">✓ ${esc(file.name)} 已解析并同步，提取 ${result.analysis.characterCount} 字、识别 ${result.analysis.skills.length} 项能力。</div>`);
-      }catch(e){status.textContent=e.message||"解析失败";document.querySelector("#uploadResume").disabled=false}
+      }catch(e){status.textContent=e.message||"解析失败";status.style.color="#a93636";document.querySelector("#uploadResume").disabled=false;alert(e.message||"解析失败，请稍后重试。")}
     }
     async function init(){
       draw('<div class="notice">正在检查当前浏览器的绑定状态…</div>');
