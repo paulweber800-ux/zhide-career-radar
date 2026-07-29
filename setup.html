@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>职得｜电脑端首次建档</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f5f6fa;color:#202231;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}.hero{padding:36px max(22px,calc((100vw - 920px)/2));background:linear-gradient(145deg,#eeeaff,#fff)}.logo{display:flex;align-items:center;gap:12px;font-size:22px;font-weight:800}.logo i{width:46px;height:46px;border-radius:15px;background:#5b55e7;color:#fff;display:grid;place-items:center;font-style:normal}.hero small{display:block;color:#5b55e7;font-weight:800;margin-top:54px}.hero h1{font-size:46px;line-height:1.22;margin:14px 0}.hero p{color:#737a89;line-height:1.7}.content{width:min(900px,calc(100% - 36px));margin:28px auto 64px}.card{background:#fff;border-radius:22px;padding:26px;margin-bottom:18px;box-shadow:0 10px 35px rgba(40,43,73,.05)}.head{display:flex;justify-content:space-between}.head h2{margin:0 0 6px}.head p,.card>p{margin:0;color:#858b99;font-size:14px}.count{color:#514bd3;background:#eeedff;border-radius:999px;padding:6px 10px;height:max-content}.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}.chips button{border:0;border-radius:999px;background:#f0f1f5;padding:10px 15px;cursor:pointer}.chips button.on{background:#5b55e7;color:#fff;font-weight:700}select,textarea{width:100%;border:1px solid #e1e3e9;border-radius:14px;background:#fafafd;font:inherit;margin-top:18px}select{height:52px;padding:0 14px}textarea{min-height:190px;padding:14px;line-height:1.6;resize:vertical}.consent{display:flex;gap:9px;align-items:flex-start;color:#666d7b;font-size:14px;line-height:1.6;margin:24px 5px}.submit{width:100%;height:58px;border:0;border-radius:999px;background:#5b55e7;color:#fff;font-size:17px;font-weight:800}.error{background:#fff0f0;color:#a93636;padding:14px;border-radius:13px;margin-bottom:14px}.result{text-align:center;background:#fff;border-radius:28px;padding:40px;max-width:700px;margin:50px auto}.result h1{font-size:64px;letter-spacing:8px}.result button{border:0;border-radius:999px;background:#5b55e7;color:#fff;padding:13px 24px}@media(max-width:620px){.hero h1{font-size:35px}.result h1{font-size:44px;letter-spacing:4px}}
+  </style>
+</head>
+<body>
+  <header class="hero"><div class="logo"><i>职</i>职得</div><small>电脑端首次建档 · 约 5 分钟</small><h1>在大屏幕上完成资料，<br>回到微信继续求职。</h1><p>填写完成后生成 8 位一次性绑定码。资料不会出现在网址中，导入后绑定码立即作废。</p></header>
+  <main class="content" id="form"></main>
+  <script>
+    const API="https://cloud1-d1gpc53cw18f7de97.service.tcloudbase.com/pairingApi";
+    const groups=[
+      ["industries","期望行业","最多 3 个",3,["互联网/软件","游戏","人工智能","广告/传媒","消费品/零售","电商","跨境电商","金融","教育培训","医疗健康","制造业","新能源","汽车","电子/半导体","建筑/地产","物流/运输","旅游/酒店","专业服务/咨询","政府/公共事业","其他"]],
+      ["roles","期望职位","最多 5 个",5,["产品经理","项目经理","产品运营","用户运营","内容运营","市场营销","品牌营销","海外市场","增长营销","广告投放","公关传播","游戏发行","销售","商务拓展","电商运营","跨境电商运营","文案策划","广告创意","UI/UX设计","数据分析","软件开发","测试工程师","算法工程师","人力资源","财务","行政","法务","教师/教研","咨询顾问","其他"]],
+      ["cities","工作地点","最多 5 个",5,["北京","上海","广州","深圳","杭州","成都","武汉","南京","苏州","重庆","西安","长沙","天津","青岛","厦门","郑州","合肥","宁波","香港","澳门","海外","远程","其他"]]
+    ];
+    const state={industries:[],roles:[],cities:[]};
+    const root=document.querySelector("#form");
+    function draw(){
+      root.innerHTML=groups.map(([key,title,hint,max,options])=>`<section class="card"><div class="head"><div><h2>${title}</h2><p>${hint}</p></div><span class="count">${state[key].length}/${max}</span></div><div class="chips">${options.map(v=>`<button type="button" data-key="${key}" data-max="${max}" data-value="${v}" class="${state[key].includes(v)?"on":""}">${v}</button>`).join("")}</div></section>`).join("")+`
+      <section class="card"><h2>工作年限</h2><select id="years"><option value="">请选择</option>${["应届生","1年以内","1-3年","3-5年","5-10年","10年以上"].map(v=>`<option>${v}</option>`).join("")}</select></section>
+      <section class="card"><h2>简历文字（选填）</h2><p>可以粘贴简历正文；也可以稍后回到小程序上传 PDF 或 Word。</p><textarea id="resume" placeholder="建议至少 50 字"></textarea></section>
+      <label class="consent"><input id="agree" type="checkbox">我同意将以上资料用于个人岗位匹配，并通过一次性绑定码传输至我的职得小程序；不会自动发送给企业。</label>
+      <div id="error"></div><button class="submit" id="submit">生成小程序绑定码</button>`;
+      document.querySelectorAll("[data-key]").forEach(btn=>btn.onclick=()=>{const a=state[btn.dataset.key],v=btn.dataset.value,max=+btn.dataset.max;if(a.includes(v))a.splice(a.indexOf(v),1);else if(a.length<max)a.push(v);draw()});
+      document.querySelector("#submit").onclick=create;
+    }
+    async function create(){
+      const years=document.querySelector("#years").value,resumeText=document.querySelector("#resume").value.trim(),error=document.querySelector("#error");
+      if(!state.industries.length||!state.roles.length||!state.cities.length||!years||!document.querySelector("#agree").checked){error.innerHTML='<div class="error">请完整选择行业、职位、城市和年限，并勾选资料使用说明。</div>';return}
+      document.querySelector("#submit").textContent="正在生成…";
+      try{
+        const response=await fetch(API,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"create",profile:{...state,years,resumeText:resumeText||undefined}})});
+        const result=await response.json();if(!result.ok)throw new Error(result.error||"生成失败");
+        root.innerHTML=`<section class="result"><small>网页建档已完成</small><h1>${result.code.slice(0,4)} ${result.code.slice(4)}</h1><p>打开职得小程序，点击“已有网页绑定码”并输入这 8 位数字。绑定码 10 分钟内有效且只能使用一次。</p><button id="copy">复制绑定码</button></section>`;
+        document.querySelector("#copy").onclick=()=>navigator.clipboard.writeText(result.code);
+        scrollTo({top:0,behavior:"smooth"});
+      }catch(e){error.innerHTML=`<div class="error">${e.message}。如果是首次测试，请先在 CloudBase 配置 pairingApi 的 HTTP 访问路径。</div>`;document.querySelector("#submit").textContent="重新生成"}
+    }
+    draw();
+  </script>
+</body>
+</html>
